@@ -5,9 +5,11 @@
 
 namespace yabbiol {
 
-void pinMode(unsigned int port, unsigned int pin, Mode mode);
-void digitalWrite(unsigned int port, unsigned int pin, Value value);
-Value digitalRead(unsigned int port, unsigned int pin);
+void initIO();
+void pinMode(Bank bank, unsigned int pin, Mode mode);
+void digitalWrite(Bank bank, unsigned int pin, Value value);
+Value digitalRead(Bank bank, unsigned int pin);
+
 }
 
 #endif

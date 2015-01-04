@@ -5,6 +5,7 @@
 #include <unistd.h>
 #include <fcntl.h>
 #include <sys/mman.h>
+#include <iostream>
 
 namespace yabbiol {
 namespace detail {
@@ -70,6 +71,10 @@ volatile std::size_t& MemoryHandle::operator[](std::size_t offset)
 	return *(m_addrspace + offset);
 }
 
+volatile std::size_t MemoryHandle::operator[](std::size_t offset) const 
+{return *(m_addrspace + offset);}
+
+
 PinHandle::PinHandle():
 	m_gpio0(detail::GPIO0),
 	m_gpio1(detail::GPIO1),
@@ -77,22 +82,100 @@ PinHandle::PinHandle():
 	m_gpio3(detail::GPIO3)
 {}
 
-
-void PinHandle::setDirection(Bank bank, unsigned int pin, Mode mode)
+void PinHandle::digitalWrite(Bank bank, unsigned int pin, Value value)
 {
 	switch(bank){
 	case Bank::GPIO0:
+		digitalWrite(m_gpio0,pin,value);
 		break;
 	case Bank::GPIO1:
+		digitalWrite(m_gpio1,pin,value);
 		break;
 	case Bank::GPIO2:
+		digitalWrite(m_gpio2,pin,value);
 		break;
 	case Bank::GPIO3:
+		digitalWrite(m_gpio3,pin,value);
 		break;
 	}
-		
-	  
+}	
+Value PinHandle::digitalRead(Bank bank, unsigned int pin)
+{
+	switch(bank){
+	case Bank::GPIO0:
+		return digitalRead(m_gpio0,pin);
+	case Bank::GPIO1:
+		return digitalRead(m_gpio1,pin);
+		break;
+	case Bank::GPIO2:
+		return digitalRead(m_gpio2,pin);
+		break;
+	case Bank::GPIO3:
+		return digitalRead(m_gpio3,pin);
+		break;
+	}
+}
 
+	
+void PinHandle::pinMode(Bank bank, unsigned int pin, Mode mode)
+{
+	switch(bank){
+	case Bank::GPIO0:
+		pinMode(m_gpio0,pin,mode);
+		break;
+	case Bank::GPIO1:
+		pinMode(m_gpio1,pin,mode);
+		break;
+	case Bank::GPIO2:
+		pinMode(m_gpio2,pin,mode);
+		break;
+	case Bank::GPIO3:
+		pinMode(m_gpio3,pin,mode);
+		break;
+	}
+}
+void PinHandle::digitalWrite(MemoryHandle& handle, unsigned int pin, Value value)
+{
+	switch(value){
+	case Value::LOW:
+		handle[GPIO_CLEARDATAOUT] = (1 << pin);
+		break;
+	case Value::HIGH:
+		handle[GPIO_SETDATAOUT] = (1 << pin);
+		break;
+	}
+}
+	
+void PinHandle::pinMode(MemoryHandle& handle,
+                             unsigned int pin, Mode mode)
+{
+	volatile std::size_t reg = handle[GPIO_DIRECTION];
+	switch(mode) {
+	case Mode::OUTPUT:
+		reg = reg & (~(1 << pin));
+		break;
+	case Mode::INPUT:
+		reg = reg & (1 << pin);
+		break;
+	}	
+	handle[GPIO_DIRECTION] = reg;
+}
+
+Value PinHandle::digitalRead(MemoryHandle& handle, unsigned int pin)
+{
+	unsigned int value = (handle[GPIO_IN] >> pin);
+	if(value == 0){
+		return Value::LOW;
+	} else {
+		return Value::HIGH;
+	}
+}
+
+PinHandle& getPinHandle()
+{
+	static PinHandle pinHandle;
+	return pinHandle;
+}
 
 
 }
