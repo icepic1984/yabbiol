@@ -121,6 +121,7 @@ void PinHandle::pinMode(Bank bank, unsigned int pin, Mode mode)
 	m_banks[static_cast<int>(bank)][GPIO_DIRECTION] = reg;
 }
 
+
 PinHandle& getPinHandle()
 {
 	static PinHandle pinHandle;
