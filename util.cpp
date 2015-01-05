@@ -40,7 +40,8 @@ MemoryHandle::MemoryHandle(std::size_t offset)
 {
 	FileHandle fd;
 	m_addrspace = static_cast<std::size_t*>(
-		mmap(0, GPIO_SIZE, PROT_READ | PROT_WRITE, MAP_SHARED, fd.m_fd, offset));
+		mmap(0, GPIO_SIZE, PROT_READ | PROT_WRITE,
+		     MAP_SHARED, fd.m_fd, offset));
 	if(m_addrspace == MAP_FAILED)
 	   throw std::runtime_error("nmap failed");
 }
@@ -146,8 +147,7 @@ void PinHandle::digitalWrite(MemoryHandle& handle, unsigned int pin, Value value
 	}
 }
 	
-void PinHandle::pinMode(MemoryHandle& handle,
-                             unsigned int pin, Mode mode)
+void PinHandle::pinMode(MemoryHandle& handle, unsigned int pin, Mode mode)
 {
 	volatile std::size_t reg = handle[GPIO_DIRECTION];
 	switch(mode) {

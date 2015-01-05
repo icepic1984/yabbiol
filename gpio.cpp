@@ -11,7 +11,6 @@ void pinMode(Bank bank, unsigned int pin, Mode mode)
 {
 	detail::getPinHandle().pinMode(bank,pin,mode);
 }
-
 	
 void digitalWrite(Bank bank, unsigned int pin, Value value)
 {
