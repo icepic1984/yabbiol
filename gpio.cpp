@@ -22,13 +22,13 @@ void delayMicroseconds(unsigned int us)
 void delay(unsigned int ms)
 {std::this_thread::sleep_for(std::chrono::milliseconds(ms));}
 
-auto micro() -> decltype(std::chrono::time_point_cast<Us>(Clock::now()))
+auto micros() -> decltype(std::chrono::time_point_cast<Us>(Clock::now()))
 {return std::chrono::time_point_cast<Us>(Clock::now());}
 
-auto milli() -> decltype(std::chrono::time_point_cast<Ms>(Clock::now())) 
+auto millis() -> decltype(std::chrono::time_point_cast<Ms>(Clock::now())) 
 {return std::chrono::time_point_cast<Ms>(Clock::now());}
 
-auto nano() -> decltype(std::chrono::time_point_cast<Ns>(Clock::now()))
+auto nanos() -> decltype(std::chrono::time_point_cast<Ns>(Clock::now()))
 {return std::chrono::time_point_cast<Ns>(Clock::now());}
 
 }

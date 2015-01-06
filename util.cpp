@@ -88,10 +88,12 @@ void PinHandle::digitalWrite(Bank bank, unsigned int pin, Value value)
 {
 	switch(value){
 	case Value::LOW:
-		m_banks[static_cast<int>(bank)][GPIO_CLEARDATAOUT] = (1 << pin);
+		m_banks[static_cast<int>(bank)][GPIO_CLEARDATAOUT] =
+		   m_banks[static_cast<int>(bank)][GPIO_CLEARDATAOUT] | (1 << pin);
 		break;
 	case Value::HIGH:
-		m_banks[static_cast<int>(bank)][GPIO_SETDATAOUT] = (1 << pin);
+		m_banks[static_cast<int>(bank)][GPIO_SETDATAOUT] =
+		   m_banks[static_cast<int>(bank)][GPIO_SETDATAOUT] | (1 << pin);
 		break;
 	}
 }	
@@ -115,7 +117,7 @@ void PinHandle::pinMode(Bank bank, unsigned int pin, Mode mode)
 		reg = reg & (~(1 << pin));
 		break;
 	case Mode::INPUT:
-		reg = reg & (1 << pin);
+		reg = reg | (1 << pin);
 		break;
 	}	
 	m_banks[static_cast<int>(bank)][GPIO_DIRECTION] = reg;
