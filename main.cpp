@@ -1,60 +1,107 @@
-#define GPIO0 0x44E07000
-#define GPIO1 0x4804C000
-#define GPIO2 0x481AC000
-#define GPIO3 0x481AE000
-#define GPIO_SIZE  0x00000FFF
-
-// #define GPIO_CLEARDATAOUT 0x64
-// #define GPIO_SETDATAOUT 0x65
-// #define GPIO_DIRECTION 0x4d
-
-#define GPIO_CLEARDATAOUT 0x190 / 4
-#define GPIO_SETDATAOUT 0x194 /4
-#define GPIO_DIRECTION 0x134 /4
-#define GPIO_IN 0x138 /4
-
-
-#define USR1_LED (1<<30)
-#define BUTTON ( 1 <<3)
-#include <stdio.h>
-#include <stdlib.h>
-#include <sys/mman.h>
-#include <sys/stat.h>
-#include <fcntl.h> 
-#include <unistd.h>
+#include "gpio.hpp"
+#include "rcswitch.hpp"
 #include <iostream>
 
-int main(int argc, char *argv[]) {
-	volatile unsigned int *gpio_addr = NULL;
+static const unsigned int pulseLength = 350;
+static const unsigned int repeatTransmit = 10;
+static const int pin = 30;
 
-    int fd = open("/dev/mem", O_RDWR);
-    printf("Mapping %X - %X (size: %X)\n", GPIO1, GPIO0+GPIO_SIZE, GPIO_SIZE);
-    gpio_addr = (volatile unsigned int*)mmap(0, GPIO_SIZE, PROT_READ | PROT_WRITE,
-                     MAP_SHARED, fd, GPIO0);
+using namespace yabbiol;
 
-    unsigned int reg = *(gpio_addr + GPIO_DIRECTION);
-    // reg = reg & (BUTTON);
-    // *(gpio_addr + GPIO_DIRECTION) = reg;
-    reg = reg & (~(1 << 30));
+void transmit(int nHigh, int nLow) 
+{
+	digitalWrite(yabbiol::Bank::GPIO0,pin,yabbiol::Value::HIGH);
+	delayMicroseconds(pulseLength * nHigh);
+	digitalWrite(yabbiol::Bank::GPIO0,pin,yabbiol::Value::LOW);
+	delayMicroseconds(pulseLength * nLow);
+}
+
+void sendT0()
+{
+	transmit(1,3);
+	transmit(1,3);
+}
+
+void sendTF() {
+	transmit(1,3);
+	transmit(3,1);
+}
+
+void sendT1()
+{
+	transmit(3,1);
+	transmit(3,1);
+}
+
+void sendSync() 
+{transmit(1,31);}
+
+char* getCodeWordA(char* sGroup, char* sDevice, bool bOn) {
+    static char sDipSwitches[13];
+    int i = 0;
+    int j = 0;
     
-   *(gpio_addr + GPIO_DIRECTION) = reg;
+    for (i=0; i < 5; i++) {
+        if (sGroup[i] == '0') {
+            sDipSwitches[j++] = 'F';
+        } else {
+            sDipSwitches[j++] = '0';
+        }
+    }
+    for (i=0; i < 5; i++) {
+        if (sDevice[i] == '0') {
+            sDipSwitches[j++] = 'F';
+        } else {
+            sDipSwitches[j++] = '0';
+        }
+    }
+    if ( bOn ) {
+        sDipSwitches[j++] = '0';
+        sDipSwitches[j++] = 'F';
+    } else {
+        sDipSwitches[j++] = 'F';
+        sDipSwitches[j++] = '0';
+    }
+    sDipSwitches[j] = '\0';
+    return sDipSwitches;
+}
 
-    std::cout << reg << std::endl;
-    if(gpio_addr == MAP_FAILED) {
-        printf("Unable to map GPIO\n");
-        exit(1);
+
+void sendTriState(char* sCodeWord) {
+  for (int nRepeat = 0; nRepeat < repeatTransmit; nRepeat++) {
+    int i = 0;
+    while (sCodeWord[i] != '\0') {
+      switch(sCodeWord[i]) {
+        case '0':
+          sendT0();
+        break;
+        case 'F':
+          sendTF();
+        break;
+        case '1':
+          sendT1();
+        break;
+      }
+      i++;
     }
-    while(1) {
-	    //int read = *(gpio_addr + GPIO_IN) >> 3;
-	    // std::cout << read << std::endl;
-	    // printf("ON\n");
-	    *(gpio_addr + GPIO_SETDATAOUT) = (1 <<30 );
-	     sleep(1);
-	     printf("OFF\n");
-	     *(gpio_addr + GPIO_CLEARDATAOUT) = (1<< 30);
-          sleep(1);
-    }
-    
-    close(fd);
-    return 0;
+    sendSync();    
+  }
+}
+
+int main(int argc, char *argv[]) 
+{
+	yarcs::RcSwitch rcs(Bank::GPIO0,pin,"11111","01000");
+	rcs.switchOn();
+	
+	
+	// int pin = 30;
+	// digitalWrite(yabbiol::Bank::GPIO0,pin,yabbiol::Value::LOW);
+	// delay(1);
+	// for(int i = 0; i < 100; ++i){
+	// 	digitalWrite(yabbiol::Bank::GPIO0,pin,yabbiol::Value::LOW);
+	// 	delay(100);
+	// 	digitalWrite(yabbiol::Bank::GPIO0,pin,yabbiol::Value::HIGH);	
+	// }	
+		
+
 }
