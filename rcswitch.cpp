@@ -117,7 +117,6 @@ void RcSwitch::sendTelegram(const std::string& telegram) {
 }
 
 
-
 }
 
  
